@@ -8,11 +8,20 @@ app = Flask(__name__)
 CORS(app)
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///foundation.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shashikala.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Database Models
+class EventRegistration(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_name = db.Column(db.String(100), nullable=False)
+    participant_name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    registration_date = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(20), default='registered')
+    
 class Donation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -116,6 +125,38 @@ def get_registrations():
         'email': r.email,
         'contact': r.contact
     } for r in registrations])
+
+@app.route('/api/events/register', methods=['POST'])
+def register_event():
+    data = request.json
+    try:
+        event_registration = EventRegistration(
+            event_name=data['event_name'],
+            participant_name=data['participant_name'],
+            email=data['email'],
+            phone=data['phone'],
+            registration_date=datetime.now(),
+            status=data.get('status', 'registered')
+        )
+        db.session.add(event_registration)
+        db.session.commit()
+        return jsonify({"message": "Event registration successful"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/events/registrations', methods=['GET'])
+def get_event_registrations():
+    event_registrations = EventRegistration.query.all()
+    return jsonify([{
+        'id': r.id,
+        'event_name': r.event_name,
+        'participant_name': r.participant_name,
+        'email': r.email,
+        'phone': r.phone,
+        'registration_date': r.registration_date.isoformat(),
+        'status': r.status
+    } for r in event_registrations])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
