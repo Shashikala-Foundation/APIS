@@ -21,9 +21,16 @@ class Donation(db.Model):
 
 class Registration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    email = db.Column(db.String(120))
-    course = db.Column(db.String(100))
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    middle_name = db.Column(db.String(50))
+    email = db.Column(db.String(120), nullable=False)
+    contact = db.Column(db.String(20), nullable=False)
+    primary_address = db.Column(db.String(200), nullable=False)
+    apt_unit_suite = db.Column(db.String(50))
+    city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(50), nullable=False)
+    zipcode = db.Column(db.String(10), nullable=False)
 
 class Contact(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,10 +67,34 @@ def donate():
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.json
-    registration = Registration(name=data.get('name'), email=data.get('email'), course=data.get('course'))
-    db.session.add(registration)
-    db.session.commit()
-    return jsonify({"message": "Registration successful"}), 201
+    required_fields = ['first_name', 'last_name', 'email', 'contact', 
+                      'primary_address', 'city', 'state', 'zipcode']
+    
+    # Check required fields
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+    
+    registration = Registration(
+        first_name=data.get('first_name'),
+        last_name=data.get('last_name'),
+        middle_name=data.get('middle_name'),
+        email=data.get('email'),
+        contact=data.get('contact'),
+        primary_address=data.get('primary_address'),
+        apt_unit_suite=data.get('apt_unit_suite'),
+        city=data.get('city'),
+        state=data.get('state'),
+        zipcode=data.get('zipcode')
+    )
+    
+    try:
+        db.session.add(registration)
+        db.session.commit()
+        return jsonify({"message": "Registration successful"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Registration failed"}), 500
 
 @app.route('/api/contact', methods=['POST'])
 def contact():
