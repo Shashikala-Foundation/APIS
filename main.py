@@ -19,6 +19,36 @@ class Donation(db.Model):
     amount = db.Column(db.Float, nullable=False)
     email = db.Column(db.String(120))
     message = db.Column(db.Text)
+    date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class Registration(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(120), nullable=False, unique=True)
+    phone = db.Column(db.String(20), nullable=False)
+    date_registered = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    price = db.Column(db.Float, nullable=False)
+    stock = db.Column(db.Integer, nullable=False)
+
+class ShoppingCart(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    date_added = db.Column(db.DateTime, default=db.func.current_timestamp())
+    product = db.relationship('Product', backref='cart_items')
+
+class Newsletter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False, unique=True)
+    subscribed = db.Column(db.Boolean, default=True)
+    date_subscribed = db.Column(db.DateTime, default=db.func.current_timestamp())
 
 class Registration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
